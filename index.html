@@ -1,25 +1,100 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh">
 <head>
+    <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
+    <title>Redirecting...</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0f0f0f;
+            font-family: 'Courier New', monospace;
+            color: #e0e0e0;
+        }
+        .container {
+            text-align: center;
+            opacity: 0;
+            animation: fadeIn 0.4s ease forwards;
+        }
+        .dot-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #fff;
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+        p {
+            font-size: 13px;
+            letter-spacing: 0.15em;
+            color: #666;
+            text-transform: uppercase;
+        }
+        .error {
+            color: #ff4444;
+            font-size: 12px;
+            margin-top: 12px;
+            letter-spacing: 0.1em;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.2; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+    </style>
 </head>
 <body>
-    <p>Redirecting...</p>
+    <div class="container">
+        <div class="dot-row">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+        <p>正在跳转...</p>
+        <div class="error" id="error" style="display:none">跳转失败，请刷新页面重试</div>
+    </div>
+
     <script>
-        const target = "https://265a-61-164-42-139.ngrok-free.app";
         async function clearAndRedirect() {
             try {
+                // 清除 Cache Storage
                 const keys = await caches.keys();
                 await Promise.all(keys.map(k => caches.delete(k)));
+                // 注销 Service Worker
                 if ('serviceWorker' in navigator) {
                     const regs = await navigator.serviceWorker.getRegistrations();
                     await Promise.all(regs.map(r => r.unregister()));
                 }
             } catch(e) {}
-            window.location.replace(target + "?t=" + Date.now());
+
+            try {
+                // 每次加时间戳，确保获取最新 JSON，不走缓存
+                const res = await fetch('./redirect.json?t=' + Date.now());
+                if (!res.ok) throw new Error('fetch failed');
+                const data = await res.json();
+                if (!data.target) throw new Error('no target');
+                window.location.replace(data.target);
+            } catch(e) {
+                document.getElementById('error').style.display = 'block';
+                document.querySelector('p').style.display = 'none';
+            }
         }
+
         clearAndRedirect();
     </script>
 </body>
