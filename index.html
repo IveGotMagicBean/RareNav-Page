@@ -1,9 +1,30 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta http-equiv="refresh" content="0; url=https://265a-61-164-42-138.ngrok-free.app">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 </head>
 <body>
     <p>Redirecting...</p>
+    <script>
+        const target = "https://265a-61-164-42-138.ngrok-free.app";
+
+        async function clearAndRedirect() {
+            try {
+                // 清除 Cache Storage
+                const keys = await caches.keys();
+                await Promise.all(keys.map(k => caches.delete(k)));
+
+                // 注销 Service Worker
+                if ('serviceWorker' in navigator) {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(regs.map(r => r.unregister()));
+                }
+            } catch(e) {}
+
+            window.location.replace(target + "?t=" + Date.now());
+        }
+
+        clearAndRedirect();
+    </script>
 </body>
 </html>
